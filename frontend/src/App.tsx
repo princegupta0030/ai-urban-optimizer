@@ -11,17 +11,28 @@ function App() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch('http://localhost:8000/health')
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        return response.json();
-      })
-      .then(data => setHealthStatus(data))
-      .catch(err => {
-        setError('Failed to connect to backend: ' + err.message);
-      });
+    const fetchHealth = () => {
+      fetch('http://localhost:8000/health')
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          return response.json();
+        })
+        .then(data => {
+          setHealthStatus(data);
+          setError(null);
+        })
+        .catch(err => {
+          setError('Failed to connect to backend: ' + err.message);
+          setHealthStatus(null);
+        });
+    };
+
+    fetchHealth();
+    const intervalId = setInterval(fetchHealth, 5000);
+
+    return () => clearInterval(intervalId);
   }, []);
 
   return (
@@ -33,7 +44,7 @@ function App() {
         <div className="status-box">
           <h3>Backend Connection Status:</h3>
           {error ? (
-            <p className="error" style={{ color: 'red' }}>{error}</p>
+            <p className="error" style={{ color: 'red' }}>Disconnected - {error}</p>
           ) : healthStatus ? (
             <p className="success" style={{ color: 'green' }}>
               Connected! Status: {healthStatus.status}, Message: {healthStatus.message}
